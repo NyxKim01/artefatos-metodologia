@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano Cartesiano - Quadrantes Estratégicos</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --text-main: #000000;
+            --text-muted: #000000;
+            --border-color: #000000;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 30px 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid #000000;
+        }
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background-color: #ffffff;
+            border: 2px dashed #000000;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .upload-section:hover {
+            border-color: #000000;
+            background-color: #f9f9f9;
+        }
+        .upload-section label {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #000000;
+            cursor: pointer;
+        }
+        input[type="file"] {
+            font-family: inherit;
+            color: #000000;
+        }
+        input[type="file"]::file-selector-button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #000000;
+            background-color: #000000;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 15px;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background-color: #333333;
+        }
+        #grafico {
+            width: 100%;
+            height: 750px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Matriz de Decisão: Impacto ESG vs Viabilidade</h2>
+        <p class="subtitle">Para gerar o gráfico corretamente, envie seu arquivo no formato CSV. Observe estes três pontos ao salvar: use vírgula para separar as colunas, escreva os números decimais com ponto em vez de vírgula e deixe a primeira linha com os nomes das colunas exatamente assim: Nome, ESG, Viabilidade.</p>
+        <div class="upload-section">
+            <label for="arquivoCSV">Selecione seu arquivo de dados (.csv)</label>
+            <input type="file" id="arquivoCSV" accept=".csv">
+        </div>
+        <div id="grafico"></div>
+    </div>
+    <script>
+        document.getElementById('arquivoCSV').addEventListener('change', function(evento) {
+            const arquivo = evento.target.files[0];
+            if (!arquivo) return;
+            const leitor = new FileReader();
+            leitor.onload = function(e) {
+                const textoCsv = e.target.result;
+                processarDados(textoCsv);
+            };
+            leitor.readAsText(arquivo);
+        });
+        
+        function processarDados(textoCsv) {
+            const lines = textoCsv.trim().split(/\r?\n/);
+            const dadosOriginais = [];
+            for (let i = 1; i < lines.length; i++) {
+                const colunas = lines[i].split(',');
+                if (colunas.length >= 3) {
+                    const nome = colunas[0].trim();
+                    const esg = parseFloat(colunas[1].trim());
+                    const viab = parseFloat(colunas[2].trim());
+                    if (!isNaN(esg) && !isNaN(viab)) {
+                        dadosOriginais.push({
+                            id: i,
+                            nome: nome,
+                            x: esg,
+                            y: viab,
+                            score: esg + viab
+                        });
+                    }
+                }
+            }
+            if (dadosOriginais.length === 0) return;
+            const ordenados = [...dadosOriginais].sort((a, b) => b.score - a.score);
+            const top3Ids = ordenados.slice(0, 3).map(d => d.id);
+            const pior3Ids = ordenados.slice(-3).map(d => d.id);
+            const todosX = dadosOriginais.map(d => d.x);
+            const todosY = dadosOriginais.map(d => d.y);
+            const mediaX = todosX.reduce((acc, val) => acc + val, 0) / todosX.length;
+            const mediaY = todosY.reduce((acc, val) => acc + val, 0) / todosY.length;
+            classificarERenderizar(dadosOriginais, top3Ids, pior3Ids, mediaX, mediaY);
+        }
+        
+        function classificarERenderizar(dados, top3Ids, pior3Ids, mediaX, mediaY) {
+            const traces = {
+                top3: { x: [], y: [], text: [], name: 'Primeiras colocadas', marker: { size: 16, color: '#000000', symbol: 'star', line: { color: '#000000', width: 1 } } },
+                piores: { x: [], y: [], text: [], name: 'Últimas colocadas', marker: { size: 14, color: '#000000', symbol: 'x', line: { color: '#000000', width: 2 } } },
+                ideais: { x: [], y: [], text: [], name: 'Ideais', marker: { size: 12, color: '#000000', symbol: 'circle' } },
+                promissoras: { x: [], y: [], text: [], name: 'Promissoras', marker: { size: 12, color: '#000000', symbol: 'square' } },
+                auxiliares: { x: [], y: [], text: [], name: 'Auxiliares', marker: { size: 12, color: '#000000', symbol: 'diamond' } },
+                naoRecomendadas: { x: [], y: [], text: [], name: 'Não Recomendadas', marker: { size: 12, color: '#000000', symbol: 'triangle-up', line: { color: '#000000', width: 1 } } }
+            };
+            const gruposPontos = [];
+            dados.forEach(d => {
+                const xi = d.x;
+                const yi = d.y;
+                let categoria = '';
+                if (top3Ids.includes(d.id)) {
+                    categoria = 'top3';
+                } else if (pior3Ids.includes(d.id)) {
+                    categoria = 'piores';
+                } else {
+                    if (xi >= mediaX && yi >= mediaY) categoria = 'ideais';
+                    else if (xi >= mediaX && yi < mediaY) categoria = 'promissoras';
+                    else if (xi < mediaX && yi >= mediaY) categoria = 'auxiliares';
+                    else categoria = 'naoRecomendadas';
+                }
+                let grupoEncontrado = gruposPontos.find(g => 
+                    g.categoria === categoria &&
+                    Math.abs(g.x - xi) < 0.001 && 
+                    Math.abs(g.y - yi) <= 0.01    
+                );
+                if (grupoEncontrado) {
+                    grupoEncontrado.ids.push(d.id);
+                } else {
+                    gruposPontos.push({ x: xi, y: yi, categoria: categoria, ids: [d.id] });
+                }
+            });
+            gruposPontos.forEach(grupo => {
+                const label = grupo.ids.length > 1 ? `[${grupo.ids.join(',')}]` : `${grupo.ids[0]}`;
+                traces[grupo.categoria].x.push(grupo.x);
+                traces[grupo.categoria].y.push(grupo.y);
+                traces[grupo.categoria].text.push(label);
+            });
+            const data = [];
+            for (const key in traces) {
+                const t = traces[key];
+                if (t.x.length > 0) {
+                    data.push({
+                        x: t.x,
+                        y: t.y,
+                        text: t.text,
+                        mode: 'markers+text',
+                        type: 'scatter',
+                        name: t.name,
+                        textposition: 'middle right', 
+                        marker: t.marker,
+                        textfont: {
+                            family: 'Segoe UI, sans-serif',
+                            size: 12,
+                            color: '#000000',
+                            weight: 'bold'
+                        }
+                    });
+                }
+            }
+            const todosX = dados.map(d => d.x);
+            const todosY = dados.map(d => d.y);
+            const minX = Math.min(...todosX) - (Math.max(...todosX) - Math.min(...todosX)) * 0.1;
+            const maxX = Math.max(...todosX) + (Math.max(...todosX) - Math.min(...todosX)) * 0.1;
+            const minY = Math.min(...todosY) - (Math.max(...todosY) - Math.min(...todosY)) * 0.1;
+            const maxY = Math.max(...todosY) + (Math.max(...todosY) - Math.min(...todosY)) * 0.1;
+            
+            const layout = {
+                title: false,
+                hovermode: 'closest',
+                // CONFIGURAÇÃO DA LEGENDA ALTERADA AQUI
+                legend: { 
+                    orientation: 'v', 
+                    y: 0.98, 
+                    x: 0.98, 
+                    xanchor: 'right', 
+                    yanchor: 'top',
+                    font: { color: '#000000' },
+                    bgcolor: 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: '#000000',
+                    borderwidth: 1
+                },
+                xaxis: { 
+                    title: { text: 'Impacto ESG (Eixo X)', font: { color: '#000000' } },
+                    zeroline: false, 
+                    gridcolor: '#e0e0e0',
+                    linecolor: '#000000',
+                    tickfont: { color: '#000000' },
+                    range: [minX, maxX]
+                },
+                yaxis: { 
+                    title: { text: 'Viabilidade (Eixo Y)', font: { color: '#000000' } },
+                    zeroline: false, 
+                    gridcolor: '#e0e0e0',
+                    linecolor: '#000000',
+                    tickfont: { color: '#000000' },
+                    range: [minY, maxY]
+                },
+                shapes: [
+                    { type: 'line', x0: mediaX, y0: minY, x1: mediaX, y1: maxY, line: { color: '#000000', width: 2, dash: 'dash' } },
+                    { type: 'line', x0: minX, y0: mediaY, x1: maxX, y1: mediaY, line: { color: '#000000', width: 2, dash: 'dash' } }
+                ],
+                annotations: [
+                    { x: mediaX, y: maxY, text: `X Médio: ${mediaX.toFixed(2)}`, showarrow: false, xanchor: 'left', yanchor: 'top', font: { color: '#000000', size: 12 }, bgcolor: 'rgba(255,255,255,0.9)' },
+                    { x: maxX, y: mediaY, text: `Y Médio: ${mediaY.toFixed(2)}`, showarrow: false, yanchor: 'bottom', xanchor: 'right', font: { color: '#000000', size: 12 }, bgcolor: 'rgba(255,255,255,0.9)' }
+                ]
+            };
+            Plotly.newPlot('grafico', data, layout, {responsive: true, displayModeBar: true});
+        }
+    </script>
+</body>
+</html>
