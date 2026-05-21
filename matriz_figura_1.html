@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plano Cartesiano - Quadrantes Estratégicos</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #dfe6e9;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 30px 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background-color: #fafbfc;
+            border: 2px dashed #c8d6e5;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #54a0ff;
+            background-color: #f0f6ff;
+        }
+
+        .upload-section label {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #576574;
+            cursor: pointer;
+        }
+
+        input[type="file"] {
+            font-family: inherit;
+            color: #576574;
+        }
+
+        input[type="file"]::file-selector-button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            background-color: #54a0ff;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 15px;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background-color: #2e86de;
+        }
+
+        #grafico {
+            width: 100%;
+            height: 750px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Matriz de Decisão: Impacto ESG vs Viabilidade</h2>
+        <p class="subtitle">Para gerar o gráfico corretamente, envie seu arquivo no formato CSV. Observe estes três pontos ao salvar: use vírgula para separar as colunas, escreva os números decimais com ponto em vez de vírgula e deixe a primeira linha com os nomes das colunas exatamente assim: Nome, ESG, Viabilidade.</p>
+        
+        <div class="upload-section">
+            <label for="arquivoCSV">Selecione seu arquivo de dados (.csv)</label>
+            <input type="file" id="arquivoCSV" accept=".csv">
+        </div>
+
+        <div id="grafico"></div>
+    </div>
+
+    <script>
+        document.getElementById('arquivoCSV').addEventListener('change', function(evento) {
+            const arquivo = evento.target.files[0];
+            if (!arquivo) return;
+
+            const leitor = new FileReader();
+            leitor.onload = function(e) {
+                const textoCsv = e.target.result;
+                processarDados(textoCsv);
+            };
+            leitor.readAsText(arquivo);
+        });
+
+        function processarDados(textoCsv) {
+            const linhas = textoCsv.trim().split(/\r?\n/);
+            
+            const todosNomes = [];
+            const todosX = [];
+            const todosY = [];
+
+            for (let i = 1; i < linhas.length; i++) {
+                const colunas = linhas[i].split(',');
+                
+                if (colunas.length >= 3) {
+                    todosNomes.push(colunas[0].trim());
+                    todosX.push(parseFloat(colunas[1].trim()));
+                    todosY.push(parseFloat(colunas[2].trim()));
+                }
+            }
+
+            if (todosX.length === 0) return;
+
+            const mediaX = todosX.reduce((acc, val) => acc + val, 0) / todosX.length;
+            const mediaY = todosY.reduce((acc, val) => acc + val, 0) / todosY.length;
+
+            classificarERenderizar(todosNomes, todosX, todosY, mediaX, mediaY);
+        }
+
+        function classificarERenderizar(nomes, x, y, mediaX, mediaY) {
+            const quadrantes = {
+                ideais: { x: [], y: [], text: [], name: 'Ideais (Alto ESG, Alta Viab.)', color: '#10ac84' },
+                promissoras: { x: [], y: [], text: [], name: 'Promissoras (Alto ESG, Baixa Viab.)', color: '#feca57' },
+                auxiliares: { x: [], y: [], text: [], name: 'Auxiliares (Baixo ESG, Alta Viab.)', color: '#54a0ff' },
+                naoRecomendadas: { x: [], y: [], text: [], name: 'Não Recomendadas (Baixo ESG, Baixa Viab.)', color: '#ff6b6b' }
+            };
+
+            for (let i = 0; i < nomes.length; i++) {
+                const xi = x[i];
+                const yi = y[i];
+                const nomei = nomes[i];
+
+                if (xi >= mediaX && yi >= mediaY) {
+                    quadrantes.ideais.x.push(xi);
+                    quadrantes.ideais.y.push(yi);
+                    quadrantes.ideais.text.push(nomei);
+                } else if (xi >= mediaX && yi < mediaY) {
+                    quadrantes.promissoras.x.push(xi);
+                    quadrantes.promissoras.y.push(yi);
+                    quadrantes.promissoras.text.push(nomei);
+                } else if (xi < mediaX && yi >= mediaY) {
+                    quadrantes.auxiliares.x.push(xi);
+                    quadrantes.auxiliares.y.push(yi);
+                    quadrantes.auxiliares.text.push(nomei);
+                } else {
+                    quadrantes.naoRecomendadas.x.push(xi);
+                    quadrantes.naoRecomendadas.y.push(yi);
+                    quadrantes.naoRecomendadas.text.push(nomei);
+                }
+            }
+
+            const data = [];
+            for (const key in quadrantes) {
+                const q = quadrantes[key];
+                if (q.x.length > 0) {
+                    data.push({
+                        x: q.x,
+                        y: q.y,
+                        text: q.text,
+                        mode: 'markers+text',
+                        type: 'scatter',
+                        name: q.name,
+                        textposition: 'top center',
+                        marker: { 
+                            size: 14, 
+                            color: q.color,
+                            line: { color: '#ffffff', width: 2 }
+                        },
+                        textfont: {
+                            family: 'Segoe UI, sans-serif',
+                            size: 11,
+                            color: '#2d3436'
+                        }
+                    });
+                }
+            }
+
+            const minX = Math.min(...x) - (Math.max(...x) - Math.min(...x)) * 0.1;
+            const maxX = Math.max(...x) + (Math.max(...x) - Math.min(...x)) * 0.1;
+            const minY = Math.min(...y) - (Math.max(...y) - Math.min(...y)) * 0.1;
+            const maxY = Math.max(...y) + (Math.max(...y) - Math.min(...y)) * 0.1;
+
+            const layout = {
+                title: false,
+                hovermode: 'closest',
+                legend: { orientation: 'h', y: -0.15, x: 0.5, xanchor: 'center' },
+                xaxis: { 
+                    title: 'Impacto ESG (Eixo X)',
+                    zeroline: false,
+                    gridcolor: '#f1f2f6',
+                    range: [minX, maxX]
+                },
+                yaxis: { 
+                    title: 'Viabilidade (Eixo Y)',
+                    zeroline: false,
+                    gridcolor: '#f1f2f6',
+                    range: [minY, maxY]
+                },
+                shapes: [
+                    { type: 'line', x0: mediaX, y0: minY, x1: mediaX, y1: maxY, line: { color: '#8395a7', width: 2, dash: 'dash' } },
+                    { type: 'line', x0: minX, y0: mediaY, x1: maxX, y1: mediaY, line: { color: '#8395a7', width: 2, dash: 'dash' } }
+                ],
+                annotations: [
+                    { x: mediaX, y: maxY, text: `X Médio: ${mediaX.toFixed(2)}`, showarrow: false, xanchor: 'left', yanchor: 'top', font: { color: '#8395a7', size: 12 }, bgcolor: 'rgba(255,255,255,0.8)' },
+                    { x: maxX, y: mediaY, text: `Y Médio: ${mediaY.toFixed(2)}`, showarrow: false, yanchor: 'bottom', xanchor: 'right', font: { color: '#8395a7', size: 12 }, bgcolor: 'rgba(255,255,255,0.8)' },
+                    { x: maxX - (maxX-mediaX)/2, y: maxY - (maxY-mediaY)/2, text: 'IDEAIS', showarrow: false, font: { color: '#10ac84', size: 24, opacity: 0.2 } },
+                    { x: maxX - (maxX-mediaX)/2, y: minY + (mediaY-minY)/2, text: 'PROMISSORAS', showarrow: false, font: { color: '#feca57', size: 24, opacity: 0.2 } },
+                    { x: minX + (mediaX-minX)/2, y: maxY - (maxY-mediaY)/2, text: 'AUXILIARES', showarrow: false, font: { color: '#54a0ff', size: 24, opacity: 0.2 } },
+                    { x: minX + (mediaX-minX)/2, y: minY + (mediaY-minY)/2, text: 'NÃO RECOMENDADAS', showarrow: false, font: { color: '#ff6b6b', size: 24, opacity: 0.2 } }
+                ]
+            };
+
+            Plotly.newPlot('grafico', data, layout, {responsive: true, displayModeBar: true});
+        }
+    </script>
+</body>
+</html>
