@@ -1,6 +1,6 @@
 # Projeto de Visualização de Ferramentas em Matriz 2x2
 
-Este projeto contém os arquivos necessários para visualizar ferramentas em uma matriz 2x2 utilizando um arquivo CSV como fonte de dados.
+Este projeto contém os arquivos necessários para visualizar ferramentas em uma matriz 2x2 utilizando um arquivo CSV como fonte de dados, além das justificativas das pontuações.
 
 ## Arquivos
 
@@ -25,23 +25,6 @@ O sistema lê os dados do arquivo `ferramentas.csv` e plota automaticamente as f
 
 ## Como usar
 
-1. Certifique-se de que o arquivo `ferramentas.csv` esteja na mesma pasta do arquivo `matriz_figura_1.html`.
-2. Abra o arquivo `matriz_figura_1.html` no navegador.
+1. Abra o arquivo `matriz_figura_1.html` no navegador.
+2. Selecione o arquivo de entrada: `ferramentas.csv`.
 3. A matriz será gerada automaticamente com base nos dados do CSV.
-
-## Estrutura esperada
-
-```text
-.
-├── ferramentas.csv
-├── justificativas.pdf
-└── matriz_figura_1.html
-```
-
-## Objetivo
-
-O objetivo deste projeto é permitir:
-
-- Visualização comparativa das ferramentas em uma matriz 2x2;
-- Organização visual baseada nas notas atribuídas;
-- Transparência na avaliação através do documento de justificativas.
