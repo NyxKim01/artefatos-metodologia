@@ -1,4 +1,4 @@
-# Projeto de Visualização de Ferramentas em Matriz 2x2
+# Artefatos da Metodologia
 
 Este projeto contém os arquivos necessários para visualizar ferramentas em uma matriz 2x2 utilizando um arquivo CSV como fonte de dados, além das justificativas das pontuações.
 
