@@ -1,6 +1,6 @@
 # Artefatos da Metodologia
 
-Este projeto contém os arquivos necessários para visualizar ferramentas em uma matriz 2x2 utilizando um arquivo CSV como fonte de dados, além das justificativas das pontuações.
+Este projeto contém os arquivos necessários para visualizar ferramentas em uma matriz 2x2 utilizando um arquivo CSV como fonte de dados, além das justificativas, cálculos de validação e geração de rankings das ferramentas avaliadas.
 
 ## Arquivos
 
@@ -15,6 +15,16 @@ O CSV é utilizado como entrada pelo arquivo HTML e deve conter as informações
 Documento com as justificativas das notas atribuídas a todas as ferramentas avaliadas.
 
 O PDF detalha os critérios e motivos utilizados para definir as pontuações presentes no dataset.
+
+---
+
+### `Calculos_ranking.xlsx`
+Planilha contendo os cálculos utilizados para geração dos rankings das ferramentas avaliadas.
+
+---
+
+### `Validacao_dos_resultados.xlsx`
+Planilha utilizada para validação dos resultados obtidos na avaliação das ferramentas.
 
 ---
 
