@@ -144,12 +144,12 @@
         
         function classificarERenderizar(dados, top3Ids, pior3Ids, mediaX, mediaY) {
             const traces = {
-                top3: { x: [], y: [], text: [], name: 'Primeiras colocadas', marker: { size: 16, color: '#000000', symbol: 'star', line: { color: '#000000', width: 1 } } },
-                piores: { x: [], y: [], text: [], name: 'Últimas colocadas', marker: { size: 14, color: '#000000', symbol: 'x', line: { color: '#000000', width: 2 } } },
-                ideais: { x: [], y: [], text: [], name: 'Ideais', marker: { size: 12, color: '#000000', symbol: 'circle' } },
-                promissoras: { x: [], y: [], text: [], name: 'Promissoras', marker: { size: 12, color: '#000000', symbol: 'square' } },
-                auxiliares: { x: [], y: [], text: [], name: 'Auxiliares', marker: { size: 12, color: '#000000', symbol: 'diamond' } },
-                naoRecomendadas: { x: [], y: [], text: [], name: 'Não Recomendadas', marker: { size: 12, color: '#000000', symbol: 'triangle-up', line: { color: '#000000', width: 1 } } }
+                top3: { x: [], y: [], text: [], hovertext: [], name: 'Primeiras colocadas', marker: { size: 16, color: '#000000', symbol: 'star', line: { color: '#000000', width: 1 } } },
+                piores: { x: [], y: [], text: [], hovertext: [], name: 'Últimas colocadas', marker: { size: 14, color: '#000000', symbol: 'x', line: { color: '#000000', width: 2 } } },
+                ideais: { x: [], y: [], text: [], hovertext: [], name: 'Ideais', marker: { size: 12, color: '#000000', symbol: 'circle' } },
+                promissoras: { x: [], y: [], text: [], hovertext: [], name: 'Promissoras', marker: { size: 12, color: '#000000', symbol: 'square' } },
+                auxiliares: { x: [], y: [], text: [], hovertext: [], name: 'Auxiliares', marker: { size: 12, color: '#000000', symbol: 'diamond' } },
+                naoRecomendadas: { x: [], y: [], text: [], hovertext: [], name: 'Não Recomendadas', marker: { size: 12, color: '#000000', symbol: 'triangle-up', line: { color: '#000000', width: 1 } } }
             };
             const gruposPontos = [];
             dados.forEach(d => {
@@ -169,12 +169,13 @@
                 let grupoEncontrado = gruposPontos.find(g => 
                     g.categoria === categoria &&
                     Math.abs(g.x - xi) < 0.001 && 
-                    Math.abs(g.y - yi) <= 0.01    
+                    Math.abs(g.y - yi) <= 0.01   
                 );
                 if (grupoEncontrado) {
                     grupoEncontrado.ids.push(d.id);
+                    grupoEncontrado.nomes.push(d.nome); // Guarda os nomes da ferramenta
                 } else {
-                    gruposPontos.push({ x: xi, y: yi, categoria: categoria, ids: [d.id] });
+                    gruposPontos.push({ x: xi, y: yi, categoria: categoria, ids: [d.id], nomes: [d.nome] });
                 }
             });
             gruposPontos.forEach(grupo => {
@@ -182,6 +183,8 @@
                 traces[grupo.categoria].x.push(grupo.x);
                 traces[grupo.categoria].y.push(grupo.y);
                 traces[grupo.categoria].text.push(label);
+                // Define o texto que aparecerá apenas no hover
+                traces[grupo.categoria].hovertext.push(grupo.nomes.join('<br>')); 
             });
             const data = [];
             for (const key in traces) {
@@ -191,6 +194,9 @@
                         x: t.x,
                         y: t.y,
                         text: t.text,
+                        hovertext: t.hovertext,
+                        // Configuração que oculta os eixos X, Y e categoria no tooltip, deixando APENAS o nome
+                        hovertemplate: '<b>%{hovertext}</b><extra></extra>',
                         mode: 'markers+text',
                         type: 'scatter',
                         name: t.name,
@@ -215,7 +221,6 @@
             const layout = {
                 title: false,
                 hovermode: 'closest',
-                // CONFIGURAÇÃO DA LEGENDA ALTERADA AQUI
                 legend: { 
                     orientation: 'v', 
                     y: 0.98, 
