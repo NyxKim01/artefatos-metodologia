@@ -110,7 +110,6 @@
             };
             leitor.readAsText(arquivo);
         });
-        
         function processarDados(textoCsv) {
             const lines = textoCsv.trim().split(/\r?\n/);
             const dadosOriginais = [];
@@ -141,7 +140,6 @@
             const mediaY = todosY.reduce((acc, val) => acc + val, 0) / todosY.length;
             classificarERenderizar(dadosOriginais, top3Ids, pior3Ids, mediaX, mediaY);
         }
-        
         function classificarERenderizar(dados, top3Ids, pior3Ids, mediaX, mediaY) {
             const traces = {
                 top3: { x: [], y: [], text: [], hovertext: [], name: 'Primeiras colocadas', marker: { size: 16, color: '#000000', symbol: 'star', line: { color: '#000000', width: 1 } } },
@@ -173,7 +171,7 @@
                 );
                 if (grupoEncontrado) {
                     grupoEncontrado.ids.push(d.id);
-                    grupoEncontrado.nomes.push(d.nome); // Guarda os nomes da ferramenta
+                    grupoEncontrado.nomes.push(d.nome); 
                 } else {
                     gruposPontos.push({ x: xi, y: yi, categoria: categoria, ids: [d.id], nomes: [d.nome] });
                 }
@@ -183,7 +181,6 @@
                 traces[grupo.categoria].x.push(grupo.x);
                 traces[grupo.categoria].y.push(grupo.y);
                 traces[grupo.categoria].text.push(label);
-                // Define o texto que aparecerá apenas no hover
                 traces[grupo.categoria].hovertext.push(grupo.nomes.join('<br>')); 
             });
             const data = [];
@@ -195,7 +192,6 @@
                         y: t.y,
                         text: t.text,
                         hovertext: t.hovertext,
-                        // Configuração que oculta os eixos X, Y e categoria no tooltip, deixando APENAS o nome
                         hovertemplate: '<b>%{hovertext}</b><extra></extra>',
                         mode: 'markers+text',
                         type: 'scatter',
@@ -217,7 +213,6 @@
             const maxX = Math.max(...todosX) + (Math.max(...todosX) - Math.min(...todosX)) * 0.1;
             const minY = Math.min(...todosY) - (Math.max(...todosY) - Math.min(...todosY)) * 0.1;
             const maxY = Math.max(...todosY) + (Math.max(...todosY) - Math.min(...todosY)) * 0.1;
-            
             const layout = {
                 title: false,
                 hovermode: 'closest',
