@@ -28,7 +28,7 @@ Planilha utilizada para validação dos resultados obtidos na avaliação das fe
 
 ---
 
-### `matriz_figura_1.html`
+### `quadrantes_figura_1.html`
 Arquivo HTML responsável por gerar a visualização dos quatro quadrantes.
 
 O sistema lê os dados do arquivo `ferramentas.csv` e plota automaticamente as ferramentas no gráfico.
